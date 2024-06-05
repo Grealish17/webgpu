@@ -1,5 +1,71 @@
 export const U256WGSL =
 `
+struct u64 {
+  lo: u32,
+  hi: u32,
+}
+
+fn u64from32(v: u32) -> u64 {
+  var n: u64;
+
+  n.lo = v;
+
+  return n;
+}
+
+fn u64add(a: u64, b: u64) -> u64 {
+  var sum: u64;
+  let lo = a.lo + b.lo;
+  let hi = a.hi + b.hi;
+
+  sum.lo = lo;
+  sum.hi = hi;
+
+  if (lo < a.lo) {
+    sum.hi += 1u;
+  }
+
+  return sum;
+}
+
+fn u64sub(a: u64, b: u64) -> u64 {
+  var sub: u64;
+  let lo = a.lo - b.lo;
+  let hi = a.hi - b.hi;
+
+  sub.lo = lo;
+  sub.hi = hi;
+
+  if (lo > a.lo) {
+    sub.hi -= 1u;
+  }
+
+  return sub;
+}
+
+fn u64mul(a: u64, b: u64) -> u64 {
+  var mul: u64;
+  let x = a.lo;
+  let y = b.lo;
+
+  let mask16 = u32((1<<16) - 1);
+
+  let x0 = x & mask16;
+  let x1 = x >> 16;
+  let y0 = y & mask16;
+  let y1 = y >> 16;
+
+  let w0 = x0 * y0;
+  let t = x1*y0 + (w0>>16);
+  var w1 = t & mask16;
+  let w2 = t >> 16;
+  w1 += x0 * y1;
+
+  mul.hi = x1*y1 + w2 + (w1>>16);
+  mul.lo = x * y;
+  
+  return mul;
+}
 // big endian
 struct u256 {
   components: array<u32, 8>

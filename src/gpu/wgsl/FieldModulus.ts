@@ -2,6 +2,150 @@ export const FieldModulusWGSL =
 `
 alias Field = u256;
 
+fn addc(a: u32, b: u32, car: u32) -> vec2<u32> {
+  let x = u64from32(a);
+  let y = u64from32(b);
+  let carry = u64from32(car);
+
+  var res = u64add(x, y);
+  res = u64add(res, carry);
+
+  return vec2<u32>(res.lo, res.hi);
+}
+
+fn subb(a: u32, b: u32, bor: u32) -> vec2<u32> {
+  let x = u64from32(a);
+  let y = u64from32(b);
+
+  let sb = bor >> 31;
+  let borrow = u64from32(sb);
+
+  var res = u64sub(x, y);
+  res = u64sub(res, borrow);
+
+  return vec2<u32>(res.lo, res.hi);
+}
+
+fn mac(a: u32, b: u32, c: u32, car: u32) -> vec2<u32> {
+  let x = u64from32(a);
+  let y = u64from32(b);
+  let z = u64from32(c);
+  let carry = u64from32(car);
+
+  var res = u64mul(y, z);
+  res = u64add(res, x);
+  res = u64add(res, carry);
+
+  return vec2<u32>(res.lo, res.hi);
+}
+
+fn field_add(x: u256, y: u256) -> u256 {
+  var carry = u32(0);
+  var res: u256;
+
+  for (var i = 7i; i >= 0i; i--) {
+      let v = addc(x.components[i], y.components[i], carry);
+      res.components[i] = v[0];
+      carry = v[1];
+  }
+
+  var borrow = u32(0);
+  for (var i = 7i; i >= 0i; i--) {
+      let v = subb(res.components[i], N.components[i], borrow);
+      res.components[i] = v[0];
+      borrow = v[1];
+  }
+
+  if (carry == 0 && borrow != 0) {
+      for (var i = 7i; i >= 0i; i--) {
+          let v = addc(res.components[i], N.components[i], carry);
+          res.components[i] = v[0];
+          carry = v[1];
+      }
+  }
+
+  return res;
+}
+
+fn mont_mul(x: u256, y: u256) -> u256 {
+  var carry = u32(0);
+  var borrow = u32(0);
+  var k = u32(0);
+  var t: array<u32, 10>;
+  var res: u256;
+
+  for (var i = 0i; i < 8i; i++) {
+      carry = 0;
+      for (var j = 0i; j < 8i; j++) {
+          let v = mac(t[j], x.components[7-i], y.components[7-j], carry);
+          t[j] = v[0];
+          carry = v[1];
+      }
+      var v = addc(t[8], carry, 0);
+      t[8] = v[0];
+      t[9] = v[1];
+
+      carry = 0;
+      k = t[0] * r_inv;
+
+      v = mac(t[0], k, N.components[7], 0);
+      carry = v[1];
+
+      for (var j = 0i; j < 7i; j++) {
+          let v = mac(t[j+1], k, N.components[6-j], carry);
+          t[j] = v[0];
+          carry = v[1];
+      }
+
+      v = addc(carry, t[8], 0);
+      t[7] = v[0];
+      carry = v[1];
+
+      t[8] = t[9] + carry;
+  }
+
+  borrow = 0;
+  for (var i = 0i; i < 8i; i++) {
+      let v = subb(t[i], N.components[7-i], borrow);
+      res.components[7-i] = v[0];
+      borrow = v[1];
+  }
+
+  borrow = borrow ^ (u32(0) - t[8]);
+
+  carry = 0;
+  for (var i = 0i; i < 8i; i++) {
+      let v = addc(res.components[7-i], N.components[7-i]&borrow, carry);
+      res.components[7-i] = v[0];
+      carry = v[1];
+  }
+
+  return res;
+}
+
+fn to_mont(x: u256) -> u256 {
+  return mont_mul(x, R_Squared);
+}
+
+fn from_mont(x: u256) -> u256 {
+  return mont_mul(x, One);
+}
+
+fn field_multiply(a: Field, b: Field) -> Field {
+  var x: Field = to_mont(a);
+  var y: Field = to_mont(b);
+
+  var z: Field;
+  for (var i = 0; i < 1000; i++) {
+    z = mont_mul(x, y);
+  }
+
+  var res: Field = from_mont(z);
+  //var res = from_mont(mont_mul(to_mont(a), to_mont(b)));
+  //var res = mont_mul(a, b);
+  return res;
+}
+
 fn field_reduce(a: u256) -> Field {
   var reduction: Field = a;
   var a_gte_ALEO = gte(a, FIELD_ORDER);
@@ -14,11 +158,14 @@ fn field_reduce(a: u256) -> Field {
   return reduction;
 }
 
+//
+/*
 fn field_add(a: Field, b: Field) -> Field {
   var sum = u256_add(a, b);
   var result = field_reduce(sum);
   return result;
 }
+*/
 
 fn field_sub(a: Field, b: Field) -> Field {
   var sub: Field;
@@ -38,7 +185,17 @@ fn field_double(a: Field) -> Field {
   return result;
 }
 
+//
+/*
 fn field_multiply(a: Field, b: Field) -> Field {
+  var res: Field;
+  for (var i = 0; i < 1000; i++) {
+    res = field_multipl(a, b);
+  }
+  return res;
+}*/
+
+fn field_multipl(a: Field, b: Field) -> Field {
   var accumulator: Field = Field(
     array<u32, 8>(0, 0, 0, 0, 0, 0, 0, 0)
   );
