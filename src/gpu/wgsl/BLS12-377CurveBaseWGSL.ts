@@ -1,6 +1,7 @@
 export const BLS12_377CurveBaseWGSL = `
 const ZERO_POINT = Point (U256_ZERO, U256_ONE, U256_ZERO, U256_ONE);
 const ZERO_AFFINE = AffinePoint (U256_ZERO, U256_ONE);
+const ONE_AFFINE = AffinePoint (U256_ONE, U256_ONE);
 
 fn mul_by_a(f: Field) -> Field {
   // mul by a is just negation of f

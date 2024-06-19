@@ -88,7 +88,8 @@ export const multipassEntryCreator = async (passes: IGPUExecution[], entryInfo: 
     const passEncoder = commandEncoder.beginComputePass();
     passEncoder.setPipeline(pipeline);
     passEncoder.setBindGroup(0, bindGroup);
-    passEncoder.dispatchWorkgroups(Math.ceil((entryInfo.numInputsForWorkgroup ?? entryInfo.numInputs) / workgroupSize));
+    //passEncoder.dispatchWorkgroups(Math.ceil((entryInfo.numInputsForWorkgroup ?? entryInfo.numInputs) / workgroupSize));
+    passEncoder.dispatchWorkgroups(4);
     passEncoder.end();
 
     previousResultBuffers = resultBuffers;

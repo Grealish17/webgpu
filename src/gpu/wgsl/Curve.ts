@@ -17,6 +17,13 @@ struct MulPointIntermediate {
   scalar: Field
 }
 
+fn add_affine(p1: AffinePoint, p2: AffinePoint) -> AffinePoint {
+  var res: AffinePoint = ZERO_AFFINE;
+  res.x = field_add(p1.x, p2.x);
+  res.y = field_add(p1.y, p2.y);
+  return res;
+}
+
 fn mul_point_32_bit_scalar(p: Point, scalar: u32) -> Point {
   var result: Point = ZERO_POINT;
   var temp = p;

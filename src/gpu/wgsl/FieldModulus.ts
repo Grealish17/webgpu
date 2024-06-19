@@ -39,6 +39,8 @@ fn mac(a: u32, b: u32, c: u32, car: u32) -> vec2<u32> {
   return vec2<u32>(res.lo, res.hi);
 }
 
+//
+/*
 fn field_add(x: u256, y: u256) -> u256 {
   var carry = u32(0);
   var res: u256;
@@ -66,6 +68,7 @@ fn field_add(x: u256, y: u256) -> u256 {
 
   return res;
 }
+*/
 
 fn mont_mul(x: u256, y: u256) -> u256 {
   var carry = u32(0);
@@ -131,6 +134,55 @@ fn from_mont(x: u256) -> u256 {
   return mont_mul(x, One);
 }
 
+fn get_bit(x: Field, i: u32) -> u32 {
+  var k = i / 32;
+  var b = i % 32;
+
+  var x_k = x.components[k];
+  var mask = u32(1 << b);
+
+  if ((x_k & mask) == u32(0)) {
+    return u32(0);
+  } else {
+    return u32(1);
+  }
+}
+
+fn inverse(n: Field) -> Field {
+  var a = n; 
+  //var b = EDWARDS_D_PLUS_ONE;
+  var b = FIELD_ORDER;
+  var p = U256_ONE;
+  var q = U256_ZERO;
+  var r = U256_ZERO;
+  var s = U256_ONE;
+  var x: Field;
+  var y: Field;
+  while (!equal(a, U256_ZERO) && !equal(b, U256_ZERO)) {
+    if (gte(a, b)) {
+      a = u256_sub(a, b);
+      p = u256_sub(p, r);
+      q = u256_sub(q, s);
+    } else {
+      b = u256_sub(b, a);
+      r = u256_sub(r, p);
+      s = u256_sub(s, q);
+    }
+  }
+  
+  if (gte(a, U256_ZERO)) {
+    x = p;
+    y = q;
+  } else {
+    x = r;
+    y = s;
+  }
+
+  return x;
+}
+
+//
+/*
 fn field_multiply(a: Field, b: Field) -> Field {
   var x: Field = to_mont(a);
   var y: Field = to_mont(b);
@@ -145,6 +197,7 @@ fn field_multiply(a: Field, b: Field) -> Field {
   //var res = mont_mul(a, b);
   return res;
 }
+*/
 
 fn field_reduce(a: u256) -> Field {
   var reduction: Field = a;
@@ -158,14 +211,13 @@ fn field_reduce(a: u256) -> Field {
   return reduction;
 }
 
-//
-/*
+
 fn field_add(a: Field, b: Field) -> Field {
   var sum = u256_add(a, b);
   var result = field_reduce(sum);
   return result;
 }
-*/
+
 
 fn field_sub(a: Field, b: Field) -> Field {
   var sub: Field;
@@ -185,17 +237,18 @@ fn field_double(a: Field) -> Field {
   return result;
 }
 
-//
+
 /*
 fn field_multiply(a: Field, b: Field) -> Field {
   var res: Field;
-  for (var i = 0; i < 1000; i++) {
+  for (var i = 0; i < 1; i++) {
     res = field_multipl(a, b);
   }
   return res;
-}*/
+}
+*/
 
-fn field_multipl(a: Field, b: Field) -> Field {
+fn field_multiply(a: Field, b: Field) -> Field {
   var accumulator: Field = Field(
     array<u32, 8>(0, 0, 0, 0, 0, 0, 0, 0)
   );
