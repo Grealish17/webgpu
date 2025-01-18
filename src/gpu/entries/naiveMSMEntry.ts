@@ -22,7 +22,7 @@ export const naive_msm = async (
   return bufferResult;
 }
 
-export const point_mul_multipass_info = (
+export const point_mul_multipass_inf = (
   affinePoints: gpuU32Inputs,
   scalars: gpuU32Inputs,
   curve: CurveType
@@ -82,7 +82,7 @@ export const point_mul_multipass_info = (
         batch = field_multiply(batch, points[bit_num][i + 1].x); 
       }
       
-      //batch = inverse(batch);
+      // batch = field_inverse(batch);
       
 
       for (var i = n-2; i >= 0; i-=2) {
@@ -133,7 +133,7 @@ export const point_mul_multipass_info = (
 
   const batchAffineTrickShaderCode = prune(
     baseModules.join(''),
-    ['get_bit', 'inverse', 'field_multiply', 'field_sub', 'field_add']
+    ['get_bit', 'field_inverse', 'field_multiply', 'field_sub', 'field_add']
   ) + batchAffineTrickEntry;
 
   const batchAffineTrickShader: IShaderCode = {
@@ -191,7 +191,7 @@ export const point_mul_multipass_info = (
   return [executionSteps, entryInfo];
 }
 
-export const point_mul_multipass_inf = (
+export const point_mul_multipass_info = (
   affinePoints: gpuU32Inputs,
   scalars: gpuU32Inputs,
   curve: CurveType

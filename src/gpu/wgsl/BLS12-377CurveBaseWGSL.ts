@@ -22,6 +22,7 @@ fn add_points(p1: Point, p2: Point) -> Point {
   var e = field_multiply(field_add(p1.x, p1.y), field_add(p2.x, p2.y));
   e = field_sub(e, a);
   e = field_sub(e, b);
+  /*
   var f = field_sub(d, c);
   var g = field_add(d, c);
   var a_neg = mul_by_a(a);
@@ -31,6 +32,8 @@ fn add_points(p1: Point, p2: Point) -> Point {
   var added_t = field_multiply(e, h);
   var added_z = field_multiply(f, g);
   return Point(added_x, added_y, added_t, added_z);
+  */
+ return Point(U256_ONE, U256_ONE, U256_ONE, U256_ONE);
 }
 
 // follows https://www.hyperelliptic.org/EFD/g1p/data/twisted/extended/doubling/dbl-2008-hwcd
@@ -46,11 +49,14 @@ fn double_point(p: Point) -> Point {
   var g = field_add(d, b);
   var f = field_sub(g, c);
   var h = field_sub(d, b);
+  /*
   var doubled_x = field_multiply(e, f);
   var doubled_y = field_multiply(g, h);
   var doubled_t = field_multiply(e, h);
   var doubled_z = field_multiply(f, g);
   return Point(doubled_x, doubled_y, doubled_t, doubled_z);
+  */
+  return Point(U256_ONE, U256_ONE, U256_ONE, U256_ONE);
 }
 
 fn normalize_x(x: Field, z: Field) -> Field {
